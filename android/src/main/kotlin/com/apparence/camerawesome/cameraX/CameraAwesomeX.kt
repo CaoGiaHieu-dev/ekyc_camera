@@ -5,11 +5,7 @@ import android.R.attr.orientation
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.Paint
+import android.graphics.*
 import android.location.Location
 import android.os.CountDownTimer
 import android.os.Handler
@@ -49,14 +45,13 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
-import android.graphics.ImageFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
+import androidx.annotation.NonNull
 
 import androidx.annotation.RequiresApi;
+import androidx.camera.core.internal.utils.ImageUtil
 
 import java.io.ByteArrayOutputStream as ByteOutputStream;
 import java.nio.ByteBuffer;
@@ -298,84 +293,120 @@ class CameraAwesomeX : CameraInterface, FlutterPlugin, ActivityAware {
         }
     }
 
-    override fun takePhoto(path: String, callback: (Boolean) -> Unit) {
-        val imageFile = File(path)
-        imageFile.parentFile?.mkdirs()
-
+    override fun takePhoto(callback: (ByteArray?) -> Unit) {
+        val imageFile = this.activity!!.getCacheDir()
         takePhotoWith(imageFile, callback)
 
     }
 
+    private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
+        val planeProxy = image.planes[0]
+        val buffer: ByteBuffer = planeProxy.buffer
+        val bytes = ByteArray(buffer.remaining())
+        buffer.get(bytes)
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size);
+        // rotate
+        val matrix = Matrix();
+        val rotate = image.imageInfo.rotationDegrees;
+        matrix.postRotate(rotate.toFloat());
+        
+        val bmp = Bitmap.createBitmap(
+            bitmap, 0, 0, bitmap.getWidth(),
+            bitmap.getHeight(), matrix, true
+        );
+        return bmp
+    }
+
     @SuppressLint("RestrictedApi")
     private fun takePhotoWith(
-        imageFile: File, callback: (Boolean) -> Unit
+        imageFile: File, callback: (ByteArray?) -> Unit
     ) {
-        val outputFileOptions =
-            ImageCapture.OutputFileOptions.Builder(imageFile)
-                .setMetadata(ImageCapture.Metadata())
-                .build()
+//        val outputFileOptions =
+//            ImageCapture.OutputFileOptions.Builder(imageFile)
+//                .setMetadata(ImageCapture.Metadata())
+//                .build()
 
         cameraState.imageCapture!!.targetRotation = orientationStreamListener!!.surfaceOrientation
         cameraState.imageCapture!!.takePicture(
-            outputFileOptions,
             ContextCompat.getMainExecutor(activity!!),
-            object : ImageCapture.OnImageSavedCallback {
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    //get bitmap from image
 
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    Log.d(
-                        CamerawesomePlugin.TAG,
-                        "Success capturing picture ${outputFileResults.savedUri}, with location: ${exifPreferences.saveGPSLocation}"
-                    )
-                    if (colorMatrix != null && noneFilter != colorMatrix) {
-                        val exif =
-                            ExifInterface(outputFileResults.savedUri!!.path!!)
+                    val bitmap = imageProxyToBitmap(image)
+                    val stream = java.io.ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                    callback(stream.toByteArray())
 
-                        val originalBitmap = BitmapFactory.decodeFile(
-                            outputFileResults.savedUri?.path
-                        )
-                        val bitmapCopy = Bitmap.createBitmap(
-                            originalBitmap.width, originalBitmap.height, Bitmap.Config.ARGB_8888
-                        )
-
-                        val canvas = Canvas(bitmapCopy)
-                        canvas.drawBitmap(originalBitmap, 0f, 0f, Paint().apply {
-                            colorFilter =
-                                ColorMatrixColorFilter(colorMatrix!!.map { it.toFloat() }
-                                    .toFloatArray())
-                        })
-
-                        try {
-                            FileOutputStream(outputFileResults.savedUri?.path).use { out ->
-                                bitmapCopy.compress(
-                                    Bitmap.CompressFormat.JPEG, 100, out
-                                )
-                            }
-                            exif.saveAttributes()
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                        }
-                    }
-
-                    if (exifPreferences.saveGPSLocation) {
-                        retrieveLocation {
-                            val exif: androidx.exifinterface.media.ExifInterface =
-                                androidx.exifinterface.media.ExifInterface(outputFileResults.savedUri!!.path!!)
-                            outputFileOptions.metadata.location = it
-                            exif.setGpsInfo(it)
-                            // We need to actually save the exif data to the file system
-                            exif.saveAttributes()
-                            callback(true)
-                        }
-                    } else {
-                        callback(true)
-                    }
                 }
 
                 override fun onError(exception: ImageCaptureException) {
                     Log.e(CamerawesomePlugin.TAG, "Error capturing picture", exception)
-                    callback(false)
+                    callback(null)
                 }
-            })
+
+            }
+        )
+//        cameraState.imageCapture!!.takePicture(
+//            outputFileOptions,
+//            ContextCompat.getMainExecutor(activity!!),
+//            object : ImageCapture.OnImageSavedCallback {
+//
+//                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+//                    Log.d(
+//                        CamerawesomePlugin.TAG,
+//                        "Success capturing picture ${outputFileResults.savedUri}, with location: ${exifPreferences.saveGPSLocation}"
+//                    )
+//                    if (colorMatrix != null && noneFilter != colorMatrix) {
+//                        val exif =
+//                            ExifInterface(outputFileResults.savedUri!!.path!!)
+//
+//                        val originalBitmap = BitmapFactory.decodeFile(
+//                            outputFileResults.savedUri?.path
+//                        )
+//                        val bitmapCopy = Bitmap.createBitmap(
+//                            originalBitmap.width, originalBitmap.height, Bitmap.Config.ARGB_8888
+//                        )
+//
+//                        val canvas = Canvas(bitmapCopy)
+//                        canvas.drawBitmap(originalBitmap, 0f, 0f, Paint().apply {
+//                            colorFilter =
+//                                ColorMatrixColorFilter(colorMatrix!!.map { it.toFloat() }
+//                                    .toFloatArray())
+//                        })
+//
+//                        try {
+//                            FileOutputStream(outputFileResults.savedUri?.path).use { out ->
+//                                bitmapCopy.compress(
+//                                    Bitmap.CompressFormat.JPEG, 100, out
+//                                )
+//                            }
+//                            exif.saveAttributes()
+//                        } catch (e: IOException) {
+//                            e.printStackTrace()
+//                        }
+//                    }
+//
+//                    if (exifPreferences.saveGPSLocation) {
+//                        retrieveLocation {
+//                            val exif: androidx.exifinterface.media.ExifInterface =
+//                                androidx.exifinterface.media.ExifInterface(outputFileResults.savedUri!!.path!!)
+//                            outputFileOptions.metadata.location = it
+//                            exif.setGpsInfo(it)
+//                            // We need to actually save the exif data to the file system
+//                            exif.saveAttributes()
+//                            callback(true)
+//                        }
+//                    } else {
+//                        callback(true)
+//                    }
+//                }
+//
+//                override fun onError(exception: ImageCaptureException) {
+//                    Log.e(CamerawesomePlugin.TAG, "Error capturing picture", exception)
+//                    callback(false)
+//                }
+//            })
     }
 
     @SuppressLint("RestrictedApi", "MissingPermission")

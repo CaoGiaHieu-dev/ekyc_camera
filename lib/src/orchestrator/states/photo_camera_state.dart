@@ -67,8 +67,8 @@ class PhotoCameraState extends CameraState {
     }
     _mediaCapture = MediaCapture.capturing(filePath: path);
     try {
-      final succeeded = await CamerawesomePlugin.takePhoto(path);
-      if (succeeded) {
+      final succeeded = await CamerawesomePlugin.takePhoto();
+      if (succeeded != null) {
         if (Platform.isIOS && filter.id != AwesomeFilter.None.id) {
           photoFilterIsolate?.kill(priority: Isolate.immediate);
 

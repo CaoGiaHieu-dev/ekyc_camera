@@ -198,8 +198,8 @@ class CamerawesomePlugin {
     );
   }
 
-  static Future<bool> takePhoto(String path) async {
-    return CameraInterface().takePhoto(path);
+  static Future<Uint8List?> takePhoto() async {
+    return CameraInterface().takePhoto();
   }
 
   static Future<void> recordVideo(

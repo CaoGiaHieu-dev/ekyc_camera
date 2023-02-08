@@ -107,7 +107,7 @@ abstract class CameraInterface {
   int getPreviewTextureId();
 
   @async
-  bool takePhoto(String path);
+  Uint8List? takePhoto();
 
   @async
   void recordVideo(String path, VideoOptions? options);

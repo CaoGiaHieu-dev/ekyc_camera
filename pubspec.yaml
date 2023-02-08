@@ -3,8 +3,7 @@ description: Easiest Flutter camera Plugin supporting capturing images, streamin
 
 
 environment:
-  sdk: '>=2.15.0 <3.0.0'
-  flutter: ">=1.10.0"
+  sdk: '>=2.15.0'
 
 dependencies:
   rxdart: 
@@ -21,7 +20,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: 
-  pigeon: 
+  pigeon: 4.2.0
 
 
 # For information on the generic Dart part of this file, see the
