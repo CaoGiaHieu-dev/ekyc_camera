@@ -172,20 +172,20 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
         requestCode: Int,
         callback: (denied: List<String>) -> Unit
     ) {
-        //  val result = suspendCoroutine { continuation ->
-        //      ActivityCompat.requestPermissions(
-        //          activity, permissions.toTypedArray(), requestCode
-        //      )
-        //      callbacks.add(
-        //          PermissionRequest(UUID.randomUUID().toString(),
-        //              permissions,
-        //              callback = { granted, _ ->
-        //                  // deep equals, ignoring order
-        //                  continuation.resume(granted)
-        //              })
-        //      )
-        //  }
-        //  callback(result)
+//          val result = suspendCoroutine { continuation ->
+//              ActivityCompat.requestPermissions(
+//                  activity, permissions.toTypedArray(), requestCode
+//              )
+//              callbacks.add(
+//                  PermissionRequest(UUID.randomUUID().toString(),
+//                      permissions,
+//                      callback = { granted, _ ->
+//                          // deep equals, ignoring order
+//                          continuation.resume(granted)
+//                      })
+//              )
+//          }
+//          callback(result)
     }
 
     companion object {
