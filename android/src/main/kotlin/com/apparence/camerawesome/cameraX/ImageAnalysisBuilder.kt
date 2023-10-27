@@ -55,8 +55,8 @@ class ImageAnalysisBuilder private constructor(
             val maxFps = if (maxFramesPerSecond == 0.0) null else maxFramesPerSecond
             return ImageAnalysisBuilder(
                 format,
-                widthOrDefault,
-                height.toInt(),
+                480,
+                640,
                 executor,
                 maxFramesPerSecond = maxFps,
             )
@@ -66,7 +66,7 @@ class ImageAnalysisBuilder private constructor(
     @SuppressLint("RestrictedApi")
     fun build(): ImageAnalysis {
         countDownLatch.reset()
-        val imageAnalysis = ImageAnalysis.Builder().setTargetResolution(Size(640, 480))
+        val imageAnalysis = ImageAnalysis.Builder().setTargetResolution(Size(480, 640))
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888).build()
         Log.d("AnalysisAZER", "maxFps: $maxFramesPerSecond")
@@ -143,7 +143,7 @@ class ImageAnalysisBuilder private constructor(
         vBuffer.get(nv21, ySize, vSize);
         uBuffer.get(nv21, ySize + vSize, uSize);
 
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, 480, 640, null);
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null);
         val out = ByteArrayOutputStream();
         yuvImage.compressToJpeg(Rect(0, 0, yuvImage.getWidth(), yuvImage.getHeight()), 100, out);
         return rotateImage(out.toByteArray(), imageProxy);
