@@ -78,7 +78,7 @@ class ImageAnalysisBuilder private constructor(
             when (format) {
                 OutputImageFormat.JPEG -> {
                     val jpegImage = ImageUtil.yuvImageToJpegByteArray(
-                        imageProxy, Rect(0, 0, imageProxy.width, imageProxy.height), 80
+                        imageProxy, Rect(0, 0, imageProxy.width, imageProxy.height), 100
                     )
                     val imageMap = imageProxyBaseAdapter(imageProxy)
 
@@ -143,7 +143,7 @@ class ImageAnalysisBuilder private constructor(
         vBuffer.get(nv21, ySize, vSize);
         uBuffer.get(nv21, ySize + vSize, uSize);
 
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.getWidth(), image.getHeight(), null);
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, 480, 640, null);
         val out = ByteArrayOutputStream();
         yuvImage.compressToJpeg(Rect(0, 0, yuvImage.getWidth(), yuvImage.getHeight()), 100, out);
         return rotateImage(out.toByteArray(), imageProxy);
